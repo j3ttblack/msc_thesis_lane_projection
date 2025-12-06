@@ -1,0 +1,27 @@
+once_data:
+  cam_data: "cam01"                         # subfolder for data cam01 images
+  annotation: "infos"                       # subfolder for data annotation files
+  lidar_data: "lidar"                       # subfolder for data lidar files
+
+once_3dlanes_data: "origin_ONCE_3DLanes\\ONCE_3DLanes"  # path to the ONCE-3DLanes dataset
+
+ground_plane_ransac:
+  camera_height: 1.40                       # m, approximate height to start ransac
+  prefilter_band_half_width: 0.6            # m, ransac ground points only at -cam_height +/- range. If None, defaults to cam_height/2.
+  band_half_width: 0.5                      # initial vertical band half-width around expected ground (m)
+  ransac_iters: 60                          # number of RANSAC iterations (keep small for speed)
+  inlier_threshold: 0.15                    # distance (m) from plane to count as inlier
+  min_inliers_for_accept: 30                # require at least this many inliers to accept a plane
+  inlier_fallback_range_mult: 3.0           # multiplier (for band_half_width, m), multiplies the search range for more inliers
+  plane_norm_degenerate_threshold: 1e-6     # unitless, if magnitude of normal vector of ransac plane is less, consider it degenerate and skip
+
+projection_mapping:
+  snap_curvature_threshold: 0.05            # RMS distance (m) to switch from linear to quadratic model
+
+output:
+  override_existing_output: True            # bool, true it overrides existing data, false it doesn't 
+  base_folder: "output"                     # base output folder
+  images: "images"                          # subfolder for camera images
+  lidar: "lidar"                            # subfolder for lidar files
+  detections_2d: "detections_2d"            # subfolder for 2D detections
+  detections_3d: "detections_3d"            # subfolder for 3D GT anchors
