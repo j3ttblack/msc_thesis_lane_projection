@@ -1,0 +1,85 @@
+runtime:
+  dataset: "ONCE"
+  seq_id: null                              # str, nullable, if defined, run only that given run/sequence id
+  file_id: null                             # str, nullable, if defined, run only that given file (need to specify seq_id)
+  override_existing_output: False           # bool, whether to override existing projection output
+  run_all_no_timing: False                  # bool, whether to run all solutions concurrently (inaccurate runtime, but more efficient)
+
+output:                                     # Output filepaths
+  base_path: "C:\\Users\\jetts\\Documents\\thesis\\thesis_code\\output"
+  calc_cl_intrinsic: True                   # bool, enable pure intrinsic (pinhole cam + flat ground)
+  cl_intrinsic_path: "cl_intrinsic"
+  calc_cl_intrinsic_ground: True            # bool, enable intrinsic + ground plane  
+  cl_intrinsic_ground_path: "cl_intrinsic_ground"
+  calc_cl_depth: True                       # bool, enable depth (lidar matching)
+  cl_depth_path: "cl_depth"
+  calc_cl_intrinsic_depth: True             # bool, enable intrinsic + depth (lidar + pinhole + ground plane)
+  cl_intrinsic_depth_path: "cl_intrinsic_depth"
+  calc_thesis_solution: True                # bool, enable proposed thesis solution pipeline
+  thesis_solution_path: "thesis_output"
+  runtime_data_path: "runtime_data.json"
+
+data:                                       # Data filepaths
+  base_path: "C:\\Users\\jetts\\Documents\\thesis\\ONCE\\output"
+  lidar_path: "lidar"
+  camera_path: "images"
+  lane_detections_folder_path: "detections_2d"
+  lane_position_ground_truth_folder_path: "detections_3d"
+  calibration_path: "calibration.json"
+  once_config_path: "C:\\Users\\jetts\\Documents\\thesis\\ONCE"
+
+lane_detection_config:
+  detection_width: null                     # px, nullable, width of detection image (if it is different then native resolution)
+  detection_height: null                    # px, nullable, height of detection image (if it is different than native resolution)
+
+ground_plane_ransac:
+  camera_height: 1.40                       # m, approximate height to start ransac
+  prefilter_band_half_width: 0.6            # m, ransac ground points only at -cam_height +/- range. If None, defaults to cam_height/2.
+  band_half_width: 0.5                      # m, half width of vertical search band around expected ground height
+  ransac_iters: 60                          # num iterations for RANSAC plane fitting
+  inlier_threshold: 0.15                    # m, max distance from plane to point to consider an inlier
+  min_inliers_for_accept: 30                # num minimum inliers for the plane to be considered valid
+  inlier_fallback_range_mult: 3.0           # multiplier (for band_half_width, m), multiplies the search range for more inliers
+  plane_norm_degenerate_threshold: 1e-6     # unitless, if magnitude of normal vector of ransac plane is less, consider it degenerate and skip
+
+depth_map:
+  depth_cutoff_min: 4.9                     # m, to extend past the car hood
+  depth_cutoff_max: 100.0                   # m, furthest distance to calculate
+  lidar_point_size_min: 2                   # radius (point)
+  lidar_point_size_max: 2                   # radius (point)
+  depth_max_point_scaling_distance: 100     # m, all points greater have the min size
+  dpi: 100                                  # dpi in px, pixel density of depth map
+  unmatched_max_search_range: 5             # num bins, will search +/- X bins in the depth bin search
+  diff_eps: 0.5                             # px, how close two points must be for them to be considered duplicates
+  lane_density_step_fraction: 0.5           # percent (of min pixel radius), lane subdivision step size (between anchors)
+  min_spacing_fraction: 0.5                 # percent (of min pixel radius), minimum distance of the next point from a valid point along the lane
+  max_deviation_from_intr: 0.2              # percent, maximum deviation from intrinsicis solution before flagged 
+
+intrinsic_plane_projection:
+  parallel_plane_thresh: 1e-8               # unitless, dot product of rays and plane normal must be above threshold
+
+projection_mapping:
+  snap_curvature_threshold: 0.05            # RMS error (m), < threshold uses linear model, > threshold uses quadratic model
+  curve_optimizer_short_search_range: 5.0   # m (along curve), initial guess for point on curve ("point exists in +/- X m") 
+  curve_optimizer_full_search_range_mult: 2.0   # m (along curve), the full search distance mult: mult * max magnitude in projection scheme
+  curve_optimizer_fallback_search_range: 100.0  # m (along curve), the full fallback searching distance for point along curve if short search fails
+  curve_optimizer_precise_xatol: 1e-5       # absolute error (m), stop optimizer when change is < absolute error
+  curve_optimizer_fallback_xatol: 1e-4      # absolute error (m)
+  median_absolute_deviation_multiplier: 6.0 # multiplier (for MAD, m), controls how aggresive points are pruned
+  percent_min_points_remaining: 0.5         # count (of intercepts), max(3, percent*length) points must be remaining
+
+result_analytics:
+  override_existing_output: False           # bool, whether to override existing analytics data
+  results_eval_folder: "evaluation"
+  posfilter_eval_path: "postfilter"
+  evaluation_extension: "_eval.json"
+  figure_output_base_path: "C:\\Users\\jetts\\Documents\\thesis\\thesis_code\\figures"
+
+  max_eucl_dist: 100                        # m, the maximum euclidean distance (along Z in world space) before it is flagged as a potential outlier
+  filter_invalid: True                      # bool, if true, remove outliers from analysis
+  calculate_rmse_curve: True                # custom RMSE structure loss, computationally expensive compared to the other losses
+  solution_equal_evaluation_percent: 0.01   # %, if two solutions have an error within X% of each other, counts them as equal
+  percentiles: [50, 90, 95, 99]             # % (numeric), metric percentile thresholds 
+  bootstrap_ci: False                       # disables bootstrapped CI to keep runtime reasonable
+  bootstrap_n: 1000                         # count, 95% ci bootstrap iter loop count
+  point_divisor: 1000                       # count, count for point divisor (ie statistics per X points)
